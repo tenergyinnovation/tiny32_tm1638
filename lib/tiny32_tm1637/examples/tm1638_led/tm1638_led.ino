@@ -1,5 +1,5 @@
 /***********************************************************************
- * Project      :     tm1638_led_example
+ * Project      :     tm1638_led
  * Description  :     Test LED on tm1638
  * Hardware     :     tiny32_v3 & tm1638
  * Author       :     Tenergy Innovation Co., Ltd.
