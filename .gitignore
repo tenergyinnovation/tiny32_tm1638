@@ -5,3 +5,5 @@
 .vscode/ipch
 .DS_Store
 lib/tiny32_tm1638/.DS_Store
+lib/ErriezTM1638/
+lib/tiny32_v3/
