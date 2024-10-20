@@ -1,6 +1,6 @@
 /***********************************************************************
- * Project      :     tm1638_led
- * Description  :     Test LED on tm1638
+ * Project      :     tm1638_display_datetime
+ * Description  :     Test Display Date-Time on tm1638
  * Hardware     :     tiny32_v3 & tm1638
  * Author       :     Tenergy Innovation Co., Ltd.
  * Date         :     155/10/2024
@@ -13,6 +13,8 @@
 #include <Arduino.h>
 #include <tiny32_v3.h>
 #include <ErriezTM1638.h>
+#include <WiFi.h>
+#include <time.h>
 
 /**************************************/
 /*            GPIO define             */
@@ -27,6 +29,14 @@
 TM1638 tm1638(CLK_PIN, DIO_PIN, STB_PIN);
 tiny32_v3 mcu;
 
+// Wi-Fi credentials
+const char *ssid = "innovation-lap";      // change SSID WiFi here
+const char *password = "July2016innovat"; // change password here
+// sync date-time
+const char *ntpServer = "asia.pool.ntp.org";
+const long gmtOffset_sec = 25200;
+const int daylightOffset_sec = 0;
+struct tm time_data;
 
 /**************************************/
 /*       Constand define value        */
@@ -788,6 +798,18 @@ void setup()
 {
     Serial.begin(115200);
 
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(1000);
+        Serial.println("Connecting to WiFi...");
+    }
+    Serial.println("Connected to WiFi");
+
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+    getLocalTime(&time_data);
+    Serial.printf("Time: %02d:%02d:%02d\r\n", time_data.tm_hour, time_data.tm_min, time_data.tm_sec);
+
     // Initialize TM1638
     tm1638.begin();
 
@@ -814,51 +836,26 @@ void setup()
  ***********************************************************************/
 void loop()
 {
-    // LED 1  Test
-    tm1638_var.led_tm1638(1, 1);
-    vTaskDelay(1000);
-    tm1638_var.led_tm1638(1, 0);
+
+    // show time 5 second
+    for (int i = 0; i < 5; i++)
+    {
+        getLocalTime(&time_data);
+        Serial.printf("Time: %02d:%02d:%02d\r\n", time_data.tm_hour, time_data.tm_min, time_data.tm_sec);
+        tm1638_var.time_tm1638(time_data.tm_hour, time_data.tm_min, time_data.tm_sec);
+        vTaskDelay(1000);
+    }
+
+    // show date 1 second
+    getLocalTime(&time_data);
+    Serial.printf("Date: %d/%d/%d\r\n", time_data.tm_mday, time_data.tm_mon + 1, time_data.tm_year);
+    tm1638_var.date_tm1638(time_data.tm_mday, time_data.tm_mon + 1, time_data.tm_year);
     vTaskDelay(1000);
 
-    // LED 2  Test
-    tm1638_var.led_tm1638(2, 1);
-    vTaskDelay(1000);
-    tm1638_var.led_tm1638(2, 0);
-    vTaskDelay(1000);
-
-    // LED 3  Test
-    tm1638_var.led_tm1638(3, 1);
-    vTaskDelay(1000);
-    tm1638_var.led_tm1638(3, 0);
-    vTaskDelay(1000);
-
-    // LED 4  Test
-    tm1638_var.led_tm1638(4, 1);
-    vTaskDelay(1000);
-    tm1638_var.led_tm1638(4, 0);
-    vTaskDelay(1000);
-
-    // LED 5  Test
-    tm1638_var.led_tm1638(5, 1);
-    vTaskDelay(1000);
-    tm1638_var.led_tm1638(5, 0);
-    vTaskDelay(1000);
-
-    // LED 6  Test
-    tm1638_var.led_tm1638(6, 1);
-    vTaskDelay(1000);
-    tm1638_var.led_tm1638(6, 0);
-    vTaskDelay(1000);
-
-    // LED 7  Test
-    tm1638_var.led_tm1638(7, 1);
-    vTaskDelay(1000);
-    tm1638_var.led_tm1638(7, 0);
-    vTaskDelay(1000);
-
-    // LED 8  Test
-    tm1638_var.led_tm1638(8, 1);
-    vTaskDelay(1000);
-    tm1638_var.led_tm1638(8, 0);
-    vTaskDelay(1000);
+    // Alarm at 7:30 AM
+    if (time_data.tm_hour == 7 && time_data.tm_min == 30)
+    {
+        Serial.printf("Alarm: %02d:%02d:%02d\r\n", time_data.tm_hour, time_data.tm_min, time_data.tm_sec);
+        mcu.buzzer_beep(2);
+    }
 }
